@@ -12,6 +12,26 @@
 ///        "en.cppreference.com/w/cpp/header/type_traits"
 ///        specification
 
+#if __cplusplus > 201103L && __cplusplus < 201500L
+#define MORPH_CXX14
+#endif
+
+#if __cplusplus > 201402L
+#define MORPH_CXX17
+#endif
+
+/// @brief Only C++17 supports inline variable
+#if defined(MORPH_CXX17)
+#define MORPH_INLINE_VARIABLE inline
+#else
+#define MORPH_INLINE_VARIABLE
+#endif
+
+#define MORPH_BOOL bool
+#define MORPH_INLINE inline
+#define MORPH_CONSTEXPR constexpr
+#define MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE MORPH_INLINE_VARIABLE MORPH_CONSTEXPR MORPH_BOOL
+
 namespace morph {
 
 using nullptr_t = decltype(nullptr);
@@ -76,25 +96,6 @@ struct add_volatile<volatile T> { using type = volatile T; };
 
 template <typename T>
 struct add_volatile<const volatile T> { using type = const volatile T; };
-
-/// @brief Alias template for const-volatility specifiers
-template <typename T>
-using remove_cv_t = typename remove_cv<T>::type;
-
-template <typename T>
-using remove_const_t = typename remove_const<T>::type;
-
-template <typename T>
-using remove_volatile_t = typename remove_volatile<T>::type;
-
-template <typename T>
-using add_cv_t = typename add_cv<T>::type;
-
-template <typename T>
-using add_const_t = typename add_const<T>::type;
-
-template <typename T>
-using add_volatile_t = typename add_volatile<T>::type;
 
 /// @brief Helper Classes
 template < class T, T v>
@@ -326,6 +327,83 @@ struct is_member_pointer : detail::is_member_pointer_base<typename remove_cv<T>:
 
 template <class T>
 struct is_member_object_pointer : detail::is_member_object_pointer_base<T> {};
+
+
+/// @brief C++14-style aliases for brevity
+template <typename T>
+using remove_cv_t = typename remove_cv<T>::type;
+
+template <typename T>
+using remove_const_t = typename remove_const<T>::type;
+
+template <typename T>
+using remove_volatile_t = typename remove_volatile<T>::type;
+
+template <typename T>
+using add_cv_t = typename add_cv<T>::type;
+
+template <typename T>
+using add_const_t = typename add_const<T>::type;
+
+template <typename T>
+using add_volatile_t = typename add_volatile<T>::type;
+
+template <class T>
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
+is_void_v = is_void<T>::value;
+
+template <class T>
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
+is_null_pointer_v = is_null_pointer<T>::value;
+
+template <class T>
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
+is_integral_v = is_integral<T>::value;
+
+template <class T>
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
+is_floating_point_v = is_floating_point<T>::value;
+
+template <class T>
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
+is_array_v = is_array<T>::value;
+
+//template <class T>
+//MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
+//is_enum_v = is_enum<T>::value;
+
+//template <class T>
+//MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
+//is_union_v = is_union<T>::value;
+
+//template <class T>
+//MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
+//is_class_v = is_class<T>::value;
+
+template <class T>
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
+is_function_v = is_function<T>::value;
+
+template <class T>
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
+is_lvalue_reference_v = is_lvalue_reference<T>::value;
+
+template <class T>
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
+is_rvalue_reference_v = is_rvalue_reference<T>::value;
+
+template <class T>
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
+is_member_object_pointer_v = is_member_object_pointer<T>::value;
+
+template <class T>
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
+is_member_function_pointer_v = is_member_function_pointer<T>::value;
+
+template <class T>
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
+is_member_pointer_v = is_member_pointer<T>::value;
+
 
 }   // namespace morph
 
