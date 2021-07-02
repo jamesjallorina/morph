@@ -1,2 +1,2 @@
 # morph
-Morph is a standard C++ type traits re-implementation for learning purposes
+morph is a re-implementation of the standard C++ type traits (for learning purposes)
