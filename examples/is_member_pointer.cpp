@@ -4,7 +4,6 @@
 // Distributed under the "MIT License". See the accompanying LICENSE.rst file.
 
 #include <iostream>
-#include <type_traits>
 #include "../include/morph/morph.hpp"
 
 class foo {};
