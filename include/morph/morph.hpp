@@ -14,6 +14,7 @@
 
 #if __cplusplus > 201103L && __cplusplus < 201500L
 #define MORPH_CXX14
+#define MORPH_HAS_VARIABLE_TEMPLATES
 #endif
 
 #if __cplusplus > 201402L
@@ -136,10 +137,17 @@ struct is_integral_base : false_type {};
 
 template <> struct is_integral_base<bool> : true_type {};
 template <> struct is_integral_base<char> : true_type {};
+template <> struct is_integral_base<unsigned char> : true_type {};
+template <> struct is_integral_base<signed char> : true_type {};
+template <> struct is_integral_base<wchar_t> : true_type {};
 template <> struct is_integral_base<short> : true_type {};
+template <> struct is_integral_base<unsigned short> : true_type {};
 template <> struct is_integral_base<int> : true_type {};
+template <> struct is_integral_base<unsigned int> : true_type {};
 template <> struct is_integral_base<long> : true_type {};
+template <> struct is_integral_base<unsigned long> : true_type {};
 template <> struct is_integral_base<long long> : true_type {};
+template <> struct is_integral_base<unsigned long long> : true_type {};
 
 }   // namespace detail
 
@@ -292,26 +300,77 @@ struct is_function : detail::is_function_base<T> {};
 template <class T>
 struct is_pointer : detail::is_pointer_base<typename remove_cv<T>::type> {};
 
-//template <class T>
-//struct is_enum : false_type {};
+#if defined(__has_feature) && defined(__clang__)
 
-// This seems difficult to implement
-//template <class T>
-//struct is_enum<enum> : true_type{};
+#define _LIBCPP_VISIBLE
+struct two {char __lx[2];};
 
-//template <class T>
-//struct is_union : false_type {};
+#if __has_feature(is_union) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
 
-// This seems difficult to implement
-//template <class T>
-//struct is_union<union> : true_type {};
+template <class T> struct _LIBCPP_VISIBLE is_union : 
+                                        integral_constant<bool, __is_union(T)> {};
 
-// This seems difficult to implement
-//template <class T>
-//struct is_class : false_type {};
+#else
 
-//template <class T>
-//struct is_class<class> : true_type {};
+template <class T> struct __libcpp_union : public false_type {};
+template <class T> struct _LIBCPP_VISIBLE is_union
+    : public __libcpp_union<typename remove_cv<T>::type> {};
+#endif
+
+#if __has_feature(is_class) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
+
+template <class T> struct _LIBCPP_VISIBLE is_class : 
+                                        integral_constant<bool, __is_class(T)> {};
+
+#else
+
+namespace is_class_imp {
+template <class T> char test(int T::*);
+template <class T> two test(...);
+}   // namespace is_class_imp
+
+template <class T> struct _LIBCPP_VISIBLE is_class : integral_constant<bool, 
+                                        sizeof(is_class_imp::__test<T>(0)) == 1 && 
+                                        !is_union<T>::value> {};
+
+#endif
+
+#if __has_feature(is_enum) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
+
+template <class T> struct _LIBCPP_VISIBLE is_enum : 
+                                        integral_constant<bool, __is_enum(T)> {};
+
+#else
+
+template <class T> struct _LIBCPP_VISIBLE is_enum : integral_constant<bool, 
+                                    !is_void<T>::value &&
+                                    !is_integral<T>::value &&
+                                    !is_floating_point<T>::value   &&
+                                    !is_array<T>::value &&
+                                    !is_pointer<T>::value &&
+                                    !is_reference<T>::value &&
+                                    !is_member_pointer<T>::value &&
+                                    !is_union<T>::value &&
+                                    !is_class<T>::value &&
+                                    !is_function<T>::value> {};
+
+#endif
+
+#endif
+
+#if !defined(has_feature) && defined(__GNUC__)
+
+/// @brief use compiler intrinsics for GNU C++ compiler
+template<typename T>
+struct is_enum : integral_constant<bool, __is_enum(T)>{};
+
+template<typename T>
+struct is_union : integral_constant<bool, __is_union(T)>{};
+
+template<typename T>
+struct is_class : integral_constant<bool, __is_class(T)>{};
+
+#endif
 
 template <class T>
 struct is_lvalue_reference : detail::is_lvalue_reference_base<typename remove_cv<T>::type> {};
@@ -327,6 +386,22 @@ struct is_member_pointer : detail::is_member_pointer_base<typename remove_cv<T>:
 
 template <class T>
 struct is_member_object_pointer : detail::is_member_object_pointer_base<T> {};
+
+template <class T>
+struct is_arithmetic : integral_constant<bool, 
+                                    is_integral<T>::value ||
+                                    is_floating_point<T>::value>{};
+
+template <class T>
+struct is_fundamental : integral_constant<bool,
+                                    is_arithmetic<T>::value ||
+                                    is_void<T>::value ||
+                                    is_null_pointer<T>::value>{};
+
+template <class T>
+struct is_reference : integral_constant<bool,
+                                    is_lvalue_reference<T>::value ||
+                                    is_rvalue_reference<T>::value> {};
 
 
 /// @brief C++14-style aliases for brevity
@@ -348,62 +423,51 @@ using add_const_t = typename add_const<T>::type;
 template <typename T>
 using add_volatile_t = typename add_volatile<T>::type;
 
-template <class T>
-MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
-is_void_v = is_void<T>::value;
+#if defined(MORPH_HAS_VARIABLE_TEMPLATES)
 
 template <class T>
-MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
-is_null_pointer_v = is_null_pointer<T>::value;
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE is_void_v = is_void<T>::value;
 
 template <class T>
-MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
-is_integral_v = is_integral<T>::value;
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE is_null_pointer_v = is_null_pointer<T>::value;
 
 template <class T>
-MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
-is_floating_point_v = is_floating_point<T>::value;
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE is_integral_v = is_integral<T>::value;
 
 template <class T>
-MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
-is_array_v = is_array<T>::value;
-
-//template <class T>
-//MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
-//is_enum_v = is_enum<T>::value;
-
-//template <class T>
-//MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
-//is_union_v = is_union<T>::value;
-
-//template <class T>
-//MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
-//is_class_v = is_class<T>::value;
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE is_floating_point_v = is_floating_point<T>::value;
 
 template <class T>
-MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
-is_function_v = is_function<T>::value;
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE is_array_v = is_array<T>::value;
 
 template <class T>
-MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
-is_lvalue_reference_v = is_lvalue_reference<T>::value;
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE is_enum_v = is_enum<T>::value;
 
 template <class T>
-MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
-is_rvalue_reference_v = is_rvalue_reference<T>::value;
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE is_union_v = is_union<T>::value;
 
 template <class T>
-MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
-is_member_object_pointer_v = is_member_object_pointer<T>::value;
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE is_class_v = is_class<T>::value;
 
 template <class T>
-MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
-is_member_function_pointer_v = is_member_function_pointer<T>::value;
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE is_function_v = is_function<T>::value;
 
 template <class T>
-MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE 
-is_member_pointer_v = is_member_pointer<T>::value;
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE is_lvalue_reference_v = is_lvalue_reference<T>::value;
 
+template <class T>
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE is_rvalue_reference_v = is_rvalue_reference<T>::value;
+
+template <class T>
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE is_member_object_pointer_v = is_member_object_pointer<T>::value;
+
+template <class T>
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE is_member_function_pointer_v = is_member_function_pointer<T>::value;
+
+template <class T>
+MORPH_INLINE_CONSTEXPR_BOOL_VARIABLE is_member_pointer_v = is_member_pointer<T>::value;
+
+#endif // MORPH_HAS_VARIABLE_TEMPLATES
 
 }   // namespace morph
 
