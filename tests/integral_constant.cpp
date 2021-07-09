@@ -2,7 +2,7 @@
 #include "catch.hpp"
 #include "../include/morph/morph.hpp"
 
-TEST_CASE("test bool_constant", "[bool_constant]")
+TEST_CASE("test integral_constant", "[integral_constant]")
 {
     STATIC_REQUIRE(morph::integral_constant<int, 2>::value == 2);
     STATIC_REQUIRE(morph::integral_constant<int, 2>() == 2);
