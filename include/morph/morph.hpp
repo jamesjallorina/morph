@@ -14,6 +14,9 @@
 
 #if __cplusplus > 201103L && __cplusplus < 201500L
 #define MORPH_CXX14
+#endif
+
+#if __cplusplus > 201103L
 #define MORPH_HAS_VARIABLE_TEMPLATES
 #endif
 
@@ -181,7 +184,7 @@ struct two {char __lx[2];};
 #if __has_feature(is_union) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
 
 template <class T> struct _LIBCPP_VISIBLE is_union_base : 
-                                        integral_constant<bool, __is_union(T)> {};
+                                        bool_constant<__is_union(T)> {};
 
 #else
 
@@ -193,7 +196,7 @@ template <class T> struct _LIBCPP_VISIBLE is_union_base
 #if __has_feature(is_class) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
 
 template <class T> struct _LIBCPP_VISIBLE is_class_base : 
-                                        integral_constant<bool, __is_class(T)> {};
+                                        bool_constant<__is_class(T)> {};
 
 #else
 
@@ -202,7 +205,7 @@ template <class T> char test(int T::*);
 template <class T> two test(...);
 }   // namespace is_class_imp
 
-template <class T> struct _LIBCPP_VISIBLE is_class_base : integral_constant<bool, 
+template <class T> struct _LIBCPP_VISIBLE is_class_base : bool_constant<
                                         sizeof(is_class_imp::test<T>(0)) == 1 && 
                                         !is_union_base<T>::value> {};
 
@@ -211,11 +214,11 @@ template <class T> struct _LIBCPP_VISIBLE is_class_base : integral_constant<bool
 #if __has_feature(is_enum) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
 
 template <class T> struct _LIBCPP_VISIBLE is_enum_base : 
-                                        integral_constant<bool, __is_enum(T)> {};
+                                        bool_constant<__is_enum(T)> {};
 
 #else
 
-template <class T> struct _LIBCPP_VISIBLE is_enum_base : integral_constant<bool, 
+template <class T> struct _LIBCPP_VISIBLE is_enum_base : bool_constant< 
                                     !is_void<T>::value &&
                                     !is_integral_base<T>::value &&
                                     !is_floating_point_base<T>::value   &&
@@ -235,13 +238,13 @@ template <class T> struct _LIBCPP_VISIBLE is_enum_base : integral_constant<bool,
 
 /// @brief use compiler intrinsics for GNU C++ compiler
 template<typename T>
-struct is_enum_base : integral_constant<bool, __is_enum(T)>{};
+struct is_enum_base : bool_constant<__is_enum(T)>{};
 
 template<typename T>
-struct is_union_base : integral_constant<bool, __is_union(T)>{};
+struct is_union_base : bool_constant<__is_union(T)>{};
 
 template<typename T>
-struct is_class_base : integral_constant<bool, __is_class(T)>{};
+struct is_class_base : bool_constant<__is_class(T)>{};
 
 #endif
 
@@ -356,23 +359,23 @@ template <class T, class U>
 struct is_member_pointer_base<T U::*> : true_type {};
 
 template <class T>
-struct is_member_object_pointer_base : integral_constant<bool, 
-                                                        is_member_pointer_base<T>::value && 
-                                                        !is_member_function_pointer_base<T>::value> {};
+struct is_member_object_pointer_base : bool_constant< 
+                                            is_member_pointer_base<T>::value && 
+                                            !is_member_function_pointer_base<T>::value> {};
 
 template <class T>
-struct is_arithmetic_base : integral_constant<bool, 
-                                    is_integral<T>::value ||
-                                    is_floating_point_base<T>::value>{};
+struct is_arithmetic_base : bool_constant< 
+                                is_integral<T>::value ||
+                                is_floating_point_base<T>::value>{};
 
 template <class T>
-struct is_fundamental_base : integral_constant<bool,
-                                    is_arithmetic_base<T>::value ||
-                                    is_void_base<T>::value ||
-                                    is_null_pointer_base<T>::value>{};
+struct is_fundamental_base : bool_constant<
+                                is_arithmetic_base<T>::value ||
+                                is_void_base<T>::value ||
+                                is_null_pointer_base<T>::value>{};
 
 template <class T>
-struct is_scalar_base : integral_constant<bool,
+struct is_scalar_base : bool_constant<
                                 is_arithmetic_base<T>::value ||
                                 is_pointer_base<T>::value ||
                                 is_member_pointer_base<T>::value ||
@@ -380,7 +383,7 @@ struct is_scalar_base : integral_constant<bool,
                                 is_null_pointer_base<T>::value>{};
 
 template <class T>
-struct is_object_base : integral_constant<bool,
+struct is_object_base : bool_constant<
                                 is_scalar_base<T>::value ||
                                 is_array_base<T>::value ||
                                 is_union_base<T>::value ||
@@ -388,13 +391,13 @@ struct is_object_base : integral_constant<bool,
 
 
 template <class T>
-struct is_reference_base : integral_constant<bool,
-                                    is_lvalue_reference_base<T>::value ||
-                                    is_rvalue_reference_base<T>::value> {};
+struct is_reference_base : bool_constant<
+                                is_lvalue_reference_base<T>::value ||
+                                is_rvalue_reference_base<T>::value> {};
 
 
 template <class T>
-struct is_compund_base : integral_constant<bool,
+struct is_compund_base : bool_constant<
                                 is_array_base<T>::value ||
                                 is_function_base<T>::value ||
                                 is_pointer_base<T>::value ||
@@ -470,6 +473,24 @@ struct is_reference : detail::is_reference_base<typename remove_cv<T>::type>{};
 
 template <class T>
 struct is_member_pointer : detail::is_member_pointer_base<typename remove_cv<T>::type> {};
+
+template <class T>
+struct is_const : false_type{};
+
+template <class T>
+struct is_const<const T> : true_type {};
+
+template <class T>
+struct is_const<const volatile T> : true_type {};
+
+template <class T>
+struct is_volatile : false_type {};
+
+template <class T>
+struct is_volatile<volatile T> : true_type {};
+
+template <class T>
+struct is_volatile<const volatile T> : true_type {};
 
 /// @brief C++14-style aliases for brevity
 template <typename T>
